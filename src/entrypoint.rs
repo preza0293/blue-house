@@ -72,12 +72,9 @@ pub fn swap(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
         token_b_mint     6
         token_b_program  7
         token_b_ata      8
-        dex_id_         9
+        dex_id_          9
         ... swap accounts ...
     */
-    if accounts.len() < 9 {
-        return Err(ProgramError::NotEnoughAccountKeys);
-    }
     let amount_in = bytemuck::try_from_bytes::<SwapData>(data)
         .map_err(|_| ProgramError::InvalidInstructionData)?
         .amount_in;
