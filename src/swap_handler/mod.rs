@@ -5,4 +5,7 @@ pub mod pump;
 pub mod ray_amm;
 pub mod ray_clmm;
 pub mod ray_cpmm;
+pub mod solfi;
+pub mod stabble;
+pub mod vertigo;
 pub mod whirlpool;
