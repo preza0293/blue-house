@@ -1,3 +1,4 @@
+use crate::Bluehouse;
 use crate::common::*;
 use pinocchio::{ProgramResult, account_info::AccountInfo};
 const STABBLE_SWAP_FLAGS: &[u8] = &[2, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0]; //12
@@ -14,43 +15,57 @@ vault a,offset+7
 vault b,offset+8
 beinifcary_token_out,offset+9
  */
-pub fn process_stabble_swap(
-    accounts: &[AccountInfo],
-    amount: [u8; 8],
-    a_to_b: bool,
-    offset: usize,
-) -> ProgramResult {
-    let mut instr_data = [0u8; 17];
-    instr_data[0] = 1;
-    instr_data[1..9].copy_from_slice(&amount); // amount
-    instr_data[9..17].copy_from_slice(&1u64.to_le_bytes());
-    let (token_in_ata, token_out_ata) = token_atas(a_to_b, accounts);
-    let (vault_token_in, vault_token_out) = if a_to_b {
-        (accounts[offset + 7].clone(), accounts[offset + 8].clone())
-    } else {
-        (accounts[offset + 8].clone(), accounts[offset + 7].clone())
-    };
-    let cpi_accounts = [
-        accounts[0].clone(),          // user
-        token_in_ata.clone(),         // token in
-        token_out_ata.clone(),        // token out
-        vault_token_in,               // vault token in
-        vault_token_out,              //vault token out
-        accounts[offset + 9].clone(), // benificcary token out
-        accounts[offset + 2].clone(), // pool
-        accounts[offset + 3].clone(), // withdraw auth
-        accounts[offset + 4].clone(), // vault
-        accounts[offset + 5].clone(), // vault auth
-        accounts[offset + 6].clone(), // vault program
-        accounts[3].clone(),          // token program
-    ];
+#[derive(Clone)]
+pub struct StabbleSwapAccounts {
+    pub program_id: AccountInfo,
+    pub first_mint: AccountInfo,
+    pub withdraw_auth: AccountInfo,
+    pub vault_auth: AccountInfo,
+    pub vault: AccountInfo,
+    pub vault_program: AccountInfo,
+    pub benificary_token_account: AccountInfo,
+    pub pool: AccountInfo,
+    pub vault_a: AccountInfo,
+    pub vault_b: AccountInfo,
+}
+impl<'a> Bluehouse {
+    pub fn process_stabble_swap(
+        &self,
+        market: &StabbleSwapAccounts,
+        amount: u64,
+        a_to_b: bool,
+    ) -> ProgramResult {
+        let (token_in_ata, token_out_ata) = self.token_atas(a_to_b);
+        let (vault_token_in, vault_token_out) = if a_to_b {
+            (&self.base.token_a_ata, &self.base.token_b_ata)
+        } else {
+            (&self.base.token_b_ata, &self.base.token_a_ata)
+        };
+        let cpi_accounts = [
+            &self.base.payer,                 //payer
+            token_in_ata,                     //token in
+            token_out_ata,                    //token out
+            vault_token_in,                   // vault token in
+            vault_token_out,                  //vault token out
+            &market.benificary_token_account, //benificary token account
+            &market.pool,                     //pool
+            &market.withdraw_auth,            //withdraw_auth
+            &market.vault,                    //pool
+            &market.vault_auth,               //vault_auth
+            &market.vault_program,            //vautt_program
+            &self.base.token_a_program,       //token program
+        ];
+        let mut instr_data = [0u8; 17];
+        instr_data[0] = 1;
+        instr_data[1..9].copy_from_slice(&amount.to_le_bytes()); // amount
+        instr_data[9..17].copy_from_slice(&1u64.to_le_bytes());
+        execute_cpi::<12>(
+            &STABBLE_PROGRAM_ID,
+            &cpi_accounts,
+            &STABBLE_SWAP_FLAGS,
+            &instr_data,
+        )?;
 
-    execute_cpi::<12>(
-        &STABBLE_PROGRAM_ID,
-        &cpi_accounts,
-        &STABBLE_SWAP_FLAGS,
-        &instr_data,
-    )?;
-
-    Ok(())
+        Ok(())
+    }
 }

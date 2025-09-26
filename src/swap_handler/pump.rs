@@ -1,5 +1,5 @@
+use crate::Bluehouse;
 use crate::common::*;
-use arrayvec::ArrayVec;
 use pinocchio::{ProgramResult, account_info::AccountInfo};
 
 const PUMP_BUY_FLAGS: &[u8] = &[
@@ -50,6 +50,23 @@ const PUMP_SELL_FLAGS: &[u8] = &[
     0, //fee config - readonly
     0, //fee program - readonly
 ]; //21
+#[derive(Clone)]
+pub struct PumpSwapAccounts {
+    pub program_id: AccountInfo,
+    pub first_mint: AccountInfo,
+    pub global_config: AccountInfo,
+    pub pump_auth: AccountInfo,
+    pub pump_fee_wallet: AccountInfo,
+    pub pool: AccountInfo,
+    pub vault_a: AccountInfo,
+    pub vault_b: AccountInfo,
+    pub coin_creator_vault_ata: AccountInfo,
+    pub coin_creator_vault_authority: AccountInfo,
+    pub global_volume_accumulator: AccountInfo,
+    pub user_voulme_accumulator: AccountInfo,
+    pub pump_fee_config: AccountInfo,
+    pub pump_fee_program_id: AccountInfo,
+}
 /*
 accounts provided
 program id,offset+0
@@ -67,90 +84,89 @@ user_volume_acc,offset+11
 fee_config,offset+12
 fee_program,offset+13
 */
-pub fn process_pump_buy(
-    accounts: &[AccountInfo],
-    amount_in: [u8; 8],
-    amount_out: [u8; 8],
-    offset: usize,
-) -> ProgramResult {
-    let mut instr_data: ArrayVec<u8, 24> = ArrayVec::new();
-    instr_data.try_extend_from_slice(PUMPFUN_BUY_SELECTOR);
-    instr_data.try_extend_from_slice(&amount_out);
-    instr_data.try_extend_from_slice(&(amount_in));
+impl<'a> Bluehouse {
+    pub fn process_pump_buy(
+        &self,
+        market: &PumpSwapAccounts,
+        amount_in: u64,
+        amount_out: u64,
+    ) -> ProgramResult {
+        let cpi_accounts = [
+            &market.pool,                         // pool
+            &self.base.payer,                     // user
+            &market.global_config,                // global config
+            &self.base.token_a_mint,              // base mint
+            &self.base.token_b_mint,              // quote mint
+            &self.base.token_a_ata,               // base ata
+            &self.base.token_b_ata,               // quote ata
+            &market.vault_a,                      // base vault
+            &market.vault_b,                      // quote vault
+            &market.pump_fee_wallet,              // protocol fee recipient
+            &market.pump_fee_wallet,              // protocol fee recipient ata
+            &self.base.token_a_program,           // base token program
+            &self.base.token_b_program,           // quote token program
+            &self.base.system_program,            // sys program
+            &self.base.ata_program,               // ata program
+            &market.pump_auth,                    // event_auth
+            &market.program_id,                   // program id
+            &market.coin_creator_vault_ata,       // coin creator vault ata
+            &market.coin_creator_vault_authority, // coin creator vault auth
+            &market.global_volume_accumulator,    // global volume accumulator
+            &market.user_voulme_accumulator,      // user volume accumulator
+            &market.pump_fee_config,              // fee config
+            &market.pump_fee_program_id,          // fee program
+        ];
+        let mut instr_data = [0u8; 24];
+        //8+8+8
+        instr_data[0..8].copy_from_slice(PUMPFUN_BUY_SELECTOR); // discriminator
+        instr_data[8..16].copy_from_slice(&amount_in.to_le_bytes()); // amount
+        instr_data[16..24].copy_from_slice(&amount_out.to_le_bytes());
 
-    let cpi_accounts = [
-        accounts[offset + 4].clone(),  // pool
-        accounts[0].clone(),           // user
-        accounts[offset + 1].clone(),  // global config
-        accounts[6].clone(),           // base mint
-        accounts[1].clone(),           // quote mint
-        accounts[8].clone(),           // base ata
-        accounts[2].clone(),           // quote ata
-        accounts[offset + 5].clone(),  // base vault
-        accounts[offset + 6].clone(),  // quote vault
-        accounts[offset + 3].clone(),  // protocol fee recipient
-        accounts[offset + 7].clone(),  // protocol fee recipient ata
-        accounts[7].clone(),           // base token program
-        accounts[3].clone(),           // quote token program
-        accounts[4].clone(),           // sys program
-        accounts[5].clone(),           // at program
-        accounts[offset + 2].clone(),  // event_auth
-        accounts[offset + 0].clone(),  // program id
-        accounts[offset + 8].clone(),  // coin creator vault ata
-        accounts[offset + 9].clone(),  // coin creator vault auth
-        accounts[offset + 10].clone(), // global_vol_acc
-        accounts[offset + 11].clone(), // local_volume_acc
-        accounts[offset + 12].clone(), // fee config
-        accounts[offset + 13].clone(), // fee program
-    ];
-    execute_cpi::<23>(
-        &PUMP_AMM_PROGRAM_ID,
-        &cpi_accounts,
-        &PUMP_BUY_FLAGS,
-        &instr_data,
-    )?;
+        execute_cpi::<23>(
+            &PUMP_AMM_PROGRAM_ID,
+            &cpi_accounts,
+            &PUMP_BUY_FLAGS,
+            &instr_data,
+        )?;
 
-    Ok(())
-}
-pub fn process_pump_sell(
-    accounts: &[AccountInfo],
-    amount_in: [u8; 8],
-    offset: usize,
-) -> ProgramResult {
-    let mut instr_data: ArrayVec<u8, 24> = ArrayVec::new();
-    instr_data.try_extend_from_slice(PUMPFUN_SELL_SELECTOR);
-    instr_data.try_extend_from_slice(&amount_in);
-    instr_data.try_extend_from_slice(&0u64.to_le_bytes());
+        Ok(())
+    }
+    pub fn process_pump_sell(&self, market: &PumpSwapAccounts, amount_in: u64) -> ProgramResult {
+        let cpi_accounts = [
+            &market.pool,                         // pool
+            &self.base.payer,                     // user
+            &market.global_config,                // global config
+            &self.base.token_a_mint,              // base mint
+            &self.base.token_b_mint,              // quote mint
+            &self.base.token_a_ata,               // base ata
+            &self.base.token_b_ata,               // quote ata
+            &market.vault_a,                      // base vault
+            &market.vault_b,                      // quote vault
+            &market.pump_fee_wallet,              // protocol fee recipient
+            &market.pump_fee_wallet,              // protocol fee recipient ata
+            &self.base.token_a_program,           // base token program
+            &self.base.token_b_program,           // quote token program
+            &self.base.system_program,            // sys program
+            &self.base.ata_program,               // ata program
+            &market.pump_auth,                    // event_auth
+            &market.program_id,                   // program id
+            &market.coin_creator_vault_ata,       // coin creator vault ata
+            &market.coin_creator_vault_authority, // coin creator vault auth
+            &market.pump_fee_config,              // fee config
+            &market.pump_fee_program_id,          // fee program
+        ];
+        let mut instr_data = [0u8; 24];
+        //8+8+8
+        instr_data[0..8].copy_from_slice(PUMPFUN_SELL_SELECTOR); // discriminator
+        instr_data[8..16].copy_from_slice(&amount_in.to_le_bytes()); // amount
+        instr_data[16..24].copy_from_slice(&0u64.to_le_bytes());
+        execute_cpi::<21>(
+            &PUMP_AMM_PROGRAM_ID,
+            &cpi_accounts,
+            &PUMP_SELL_FLAGS,
+            &instr_data,
+        )?;
 
-    let cpi_accounts = [
-        accounts[offset + 4].clone(),  // pool
-        accounts[0].clone(),           // user
-        accounts[offset + 1].clone(),  // global config
-        accounts[6].clone(),           // base mint (token x)
-        accounts[1].clone(),           // quote mint
-        accounts[8].clone(),           // base ata
-        accounts[2].clone(),           // quote ata
-        accounts[offset + 5].clone(),  // base vault
-        accounts[offset + 6].clone(),  // quote vault
-        accounts[offset + 3].clone(),  // protocol fee recipient
-        accounts[offset + 7].clone(),  // protocol fee recipient ata
-        accounts[7].clone(),           // base token program (token x program)
-        accounts[3].clone(),           // quote token program
-        accounts[4].clone(),           // sys program
-        accounts[5].clone(),           // ata program
-        accounts[offset + 2].clone(),  // event_auth
-        accounts[offset + 0].clone(),  // program id
-        accounts[offset + 8].clone(),  // coin creator vault ata
-        accounts[offset + 9].clone(),  // coin creator vault auth
-        accounts[offset + 12].clone(), // fee config
-        accounts[offset + 13].clone(), // fee program
-    ];
-    execute_cpi::<21>(
-        &PUMP_AMM_PROGRAM_ID,
-        &cpi_accounts,
-        &PUMP_SELL_FLAGS,
-        &instr_data,
-    )?;
-
-    Ok(())
+        Ok(())
+    }
 }

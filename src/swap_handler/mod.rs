@@ -1,10 +1,15 @@
-pub mod humidifi;
+//pub mod humidifi;
+pub mod lifinity;
 pub mod meteora_damm_v2;
 pub mod meteora_dlmm;
+pub mod obric_v2;
+pub mod pancake_v3;
+pub mod phoniex;
 pub mod pump;
 pub mod ray_amm;
 pub mod ray_clmm;
 pub mod ray_cpmm;
+pub mod saros;
 pub mod solfi;
 pub mod stabble;
 pub mod vertigo;
