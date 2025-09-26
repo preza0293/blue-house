@@ -29,60 +29,59 @@ pub struct DlmmSwapAccounts {
     pub bin_array_3: Option<AccountInfo>,
     pub bin_array_4: Option<AccountInfo>,
 }
-impl<'a> Bluehouse {
-    pub fn process_meteora_dlmm_swap(
-        &self,
-        market: &DlmmSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        let (token_in_ata, token_out_ata) = self.token_atas(a_to_b);
-        let mut cpi_accounts: ArrayVec<&AccountInfo, 20> = ArrayVec::new();
-        cpi_accounts.extend([
-            &market.lb_pair,
-            &market.program_id,
-            &market.vault_a,
-            &market.vault_b,
-            token_in_ata,
-            token_out_ata,
-            &self.base.token_a_mint,
-            &self.base.token_b_mint,
-            &market.oracle,
-            &market.program_id,
-            &self.base.payer,
-            &self.base.token_a_program,
-            &self.base.token_b_program,
-            &market.event_auth,
-            &market.program_id,
-            &market.bin_array_0,
-        ]);
 
-        if let Some(ref b1) = market.bin_array_1 {
-            cpi_accounts.push(b1);
-        }
-        if let Some(ref b2) = market.bin_array_2 {
-            cpi_accounts.push(b2);
-        }
-        if let Some(ref b3) = market.bin_array_3 {
-            cpi_accounts.push(b3);
-        }
+pub fn process_meteora_dlmm_swap(
+    bh: &Bluehouse,
+    market: &DlmmSwapAccounts,
+    amount: u64,
+    a_to_b: bool,
+) -> ProgramResult {
+    let (token_in_ata, token_out_ata) = bh.token_atas(a_to_b);
+    let mut cpi_accounts: ArrayVec<&AccountInfo, 20> = ArrayVec::new();
+    cpi_accounts.extend([
+        &market.lb_pair,
+        &market.program_id,
+        &market.vault_a,
+        &market.vault_b,
+        token_in_ata,
+        token_out_ata,
+        &bh.base.token_a_mint,
+        &bh.base.token_b_mint,
+        &market.oracle,
+        &market.program_id,
+        &bh.base.payer,
+        &bh.base.token_a_program,
+        &bh.base.token_b_program,
+        &market.event_auth,
+        &market.program_id,
+        &market.bin_array_0,
+    ]);
 
-        if let Some(ref b4) = market.bin_array_4 {
-            cpi_accounts.push(b4);
-        }
-        let mut instr_data = [0u8; 24];
-        //8+8+8
-        instr_data[0..8].copy_from_slice(SWAP_SELECTOR); // discriminator
-        instr_data[8..16].copy_from_slice(&amount.to_le_bytes()); // amount
-        instr_data[16..24].copy_from_slice(&1u64.to_le_bytes());
-
-        execute_cpi::<20>(
-            &DLMM_PROGRAM_ID,
-            &cpi_accounts,
-            &DLMM_SWAP_FLAGS,
-            &instr_data,
-        )?;
-
-        Ok(())
+    if let Some(ref b1) = market.bin_array_1 {
+        cpi_accounts.push(b1);
     }
+    if let Some(ref b2) = market.bin_array_2 {
+        cpi_accounts.push(b2);
+    }
+    if let Some(ref b3) = market.bin_array_3 {
+        cpi_accounts.push(b3);
+    }
+
+    if let Some(ref b4) = market.bin_array_4 {
+        cpi_accounts.push(b4);
+    }
+    let mut instr_data = [0u8; 24];
+    //8+8+8
+    instr_data[0..8].copy_from_slice(SWAP_SELECTOR); // discriminator
+    instr_data[8..16].copy_from_slice(&amount.to_le_bytes()); // amount
+    instr_data[16..24].copy_from_slice(&1u64.to_le_bytes());
+
+    execute_cpi::<20>(
+        &DLMM_PROGRAM_ID,
+        &cpi_accounts,
+        &DLMM_SWAP_FLAGS,
+        &instr_data,
+    )?;
+
+    Ok(())
 }

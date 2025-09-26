@@ -22,42 +22,41 @@ pub struct DammV2SwapAccounts {
     pub vault_a: AccountInfo,
     pub vault_b: AccountInfo,
 }
-impl<'a> Bluehouse {
-    pub fn process_meteora_damm_v2_swap(
-        &self,
-        market: &DammV2SwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        let mut instr_data = [0u8; 24];
-        //8+8+8
-        instr_data[0..8].copy_from_slice(SWAP_SELECTOR); // discriminator
-        instr_data[8..16].copy_from_slice(&amount.to_le_bytes()); // amount
-        instr_data[16..24].copy_from_slice(&1u64.to_le_bytes());
-        let (token_in_ata, token_out_ata) = self.token_atas(a_to_b);
-        let cpi_accounts = [
-            &market.pool_auth,          // pool_auth
-            &market.pool,               // pool
-            token_in_ata,               // user token in ATA
-            token_out_ata,              // user token out ATA
-            &market.vault_a,            // vault A
-            &market.vault_b,            // vault B
-            &self.base.token_a_mint,    // mint A
-            &self.base.token_b_mint,    // mint B
-            &self.base.payer,           // payer / user
-            &self.base.token_a_program, // token A program
-            &self.base.token_b_program, // token B program
-            &market.program_id,         // referrer token account
-            &market.event_auth,         // event auth
-            &market.program_id,         // program ID
-        ];
-        execute_cpi::<14>(
-            &DAMM_PROGRAM_ID,
-            &cpi_accounts,
-            &DAMM_V2_SWAP_FLAGS,
-            &instr_data,
-        )?;
 
-        Ok(())
-    }
+pub fn process_meteora_damm_v2_swap(
+    bh: &Bluehouse,
+    market: &DammV2SwapAccounts,
+    amount: u64,
+    a_to_b: bool,
+) -> ProgramResult {
+    let mut instr_data = [0u8; 24];
+    //8+8+8
+    instr_data[0..8].copy_from_slice(SWAP_SELECTOR); // discriminator
+    instr_data[8..16].copy_from_slice(&amount.to_le_bytes()); // amount
+    instr_data[16..24].copy_from_slice(&1u64.to_le_bytes());
+    let (token_in_ata, token_out_ata) = bh.token_atas(a_to_b);
+    let cpi_accounts = [
+        &market.pool_auth,        // pool_auth
+        &market.pool,             // pool
+        token_in_ata,             // user token in ATA
+        token_out_ata,            // user token out ATA
+        &market.vault_a,          // vault A
+        &market.vault_b,          // vault B
+        &bh.base.token_a_mint,    // mint A
+        &bh.base.token_b_mint,    // mint B
+        &bh.base.payer,           // payer / user
+        &bh.base.token_a_program, // token A program
+        &bh.base.token_b_program, // token B program
+        &market.program_id,       // referrer token account
+        &market.event_auth,       // event auth
+        &market.program_id,       // program ID
+    ];
+    execute_cpi::<14>(
+        &DAMM_PROGRAM_ID,
+        &cpi_accounts,
+        &DAMM_V2_SWAP_FLAGS,
+        &instr_data,
+    )?;
+
+    Ok(())
 }

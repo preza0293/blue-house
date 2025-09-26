@@ -1,0 +1,1 @@
+/home/mubariz/Documents/SolDev/swap-interface/target/sbpf-solana-solana/release/swap_interface.so: /home/mubariz/Documents/SolDev/swap-interface/src/entrypoint.rs /home/mubariz/Documents/SolDev/swap-interface/src/lib.rs

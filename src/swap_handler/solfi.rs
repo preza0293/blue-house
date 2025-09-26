@@ -20,36 +20,34 @@ pub struct SolfiSwapAccounts {
     pub vault_a: AccountInfo,
     pub vault_b: AccountInfo,
 }
-impl<'a> Bluehouse {
-    pub fn process_solfi_swap(
-        &self,
-        market: &SolfiSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        let cpi_accounts = [
-            &self.base.payer,           // user
-            &market.pool,               // pool
-            &market.vault_a,            // vault a
-            &market.vault_b,            // vault b
-            &self.base.token_a_ata,     // ata a
-            &self.base.token_a_ata,     // ata b
-            &self.base.token_a_program, // token program
-            &market.sysvar_ix,          // sysvar ix
-        ];
-        let direction = if a_to_b { 0u8 } else { 1u8 };
-        let mut instr_data = [0u8; 18];
-        instr_data[0] = 7; // discriminator
-        instr_data[1..9].copy_from_slice(&amount.to_le_bytes()); // amount
-        instr_data[9..17].copy_from_slice(&0u64.to_le_bytes());
-        instr_data[17] = direction;
-        execute_cpi::<8>(
-            &SOLFI_PROGRAM_ID,
-            &cpi_accounts,
-            &SOLFI_SWAP_FLAGS,
-            &instr_data,
-        )?;
+pub fn process_solfi_swap(
+    bh: &Bluehouse,
+    market: &SolfiSwapAccounts,
+    amount: u64,
+    a_to_b: bool,
+) -> ProgramResult {
+    let cpi_accounts = [
+        &bh.base.payer,           // user
+        &market.pool,             // pool
+        &market.vault_a,          // vault a
+        &market.vault_b,          // vault b
+        &bh.base.token_a_ata,     // ata a
+        &bh.base.token_a_ata,     // ata b
+        &bh.base.token_a_program, // token program
+        &market.sysvar_ix,        // sysvar ix
+    ];
+    let direction = if a_to_b { 0u8 } else { 1u8 };
+    let mut instr_data = [0u8; 18];
+    instr_data[0] = 7; // discriminator
+    instr_data[1..9].copy_from_slice(&amount.to_le_bytes()); // amount
+    instr_data[9..17].copy_from_slice(&0u64.to_le_bytes());
+    instr_data[17] = direction;
+    execute_cpi::<8>(
+        &SOLFI_PROGRAM_ID,
+        &cpi_accounts,
+        &SOLFI_SWAP_FLAGS,
+        &instr_data,
+    )?;
 
-        Ok(())
-    }
+    Ok(())
 }
