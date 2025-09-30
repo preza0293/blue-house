@@ -1,28 +1,59 @@
-#![no_std]
+#![allow(unexpected_cfgs)]
 mod common;
+#[cfg(not(feature = "no-entrypoint"))]
 mod swap_handler;
-use crate::swap_handler::{
-    lifinity::LifinitySwapAccounts, meteora_damm_v2::DammV2SwapAccounts,
-    meteora_dlmm::DlmmSwapAccounts, obric_v2::ObricV2SwapAccounts, pancake_v3::PancakeSwapAccounts,
-    phoniex::PhoniexSwapAccounts, pump::PumpSwapAccounts, ray_amm::RaySwapAccounts,
-    ray_clmm::RayClmmSwapAccounts, ray_cpmm::RayCpmmSwapAccounts, saros::SarosDlmmSwapAccounts,
-    saros::SarosSwapAccounts, solfi::SolfiSwapAccounts, stabble::StabbleSwapAccounts,
-    vertigo::VertigoSwapAccounts, whirlpool::WhirlpoolSwapV2Accounts,
+use crate::{
+    common::*,
+    swap_handler::{
+        lifinity::process_lifinity_swap,
+        meteora_damm_v2::*,
+        meteora_dlmm::*,
+        obric_v2::process_obric_v2_swap,
+        pancake_v3::process_pancake_v3_swap,
+        phoniex::process_phoniex_swap,
+        pump::*,
+        ray_amm::*,
+        ray_clmm::*,
+        ray_cpmm::*,
+        saros::{process_saros_dlmm_swap, process_saros_swap},
+        solfi::process_solfi_swap,
+        stabble::process_stabble_swap,
+        vertigo::{process_vertigo_buy, process_vertigo_sell},
+        whirlpool::*,
+    },
 };
-use pinocchio::{ProgramResult, account_info::AccountInfo};
-/*
-    wallet           0
-    token_a_mint     1
-    token_a_ata      2
-    token_program    3
-    sys_program      4
-    ata_program      5
-    token_b_mint     6
-    token_b_program  7
-    token_b_ata      8
-    ... swap accounts ...
-*/
 
+use bytemuck::{Pod, Zeroable};
+use pinocchio::{
+    ProgramResult, account_info::AccountInfo, default_panic_handler, no_allocator,
+    program_entrypoint, program_error::ProgramError, pubkey::Pubkey,
+};
+program_entrypoint!(process_instruction);
+no_allocator!();
+default_panic_handler!();
+pinocchio_pubkey::declare_id!("ENrRns55VechXJiq4bMbdx7idzabctvaEJoYeWxRNe7Y");
+#[inline(always)]
+pub fn process_instruction(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    instruction_data: &[u8],
+) -> ProgramResult {
+    swap(accounts, &instruction_data)?;
+    Ok(())
+}
+#[repr(u8)]
+pub enum ProgramInstruction {
+    Swap,
+}
+impl TryFrom<&u8> for ProgramInstruction {
+    type Error = ProgramError;
+    fn try_from(value: &u8) -> Result<Self, Self::Error> {
+        match *value {
+            0 => Ok(ProgramInstruction::Swap),
+            _ => Err(ProgramError::InvalidInstructionData),
+        }
+    }
+}
 #[derive(Clone)]
 pub struct BaseAccounts {
     pub payer: AccountInfo,
@@ -36,252 +67,118 @@ pub struct BaseAccounts {
     pub token_b_ata: AccountInfo,
 }
 pub struct Bluehouse {
-    base: BaseAccounts,
+    pub base: BaseAccounts,
 }
 impl Bluehouse {
-    pub fn new(base: BaseAccounts) -> Self {
-        Self { base }
+    pub fn from_slice(slice: &[AccountInfo]) -> Result<Self, ProgramError> {
+        if slice.len() < 9 {
+            return Err(ProgramError::NotEnoughAccountKeys);
+        }
+        Ok(Self {
+            base: BaseAccounts {
+                payer: slice[0].clone(),
+                token_a_mint: slice[1].clone(),
+                token_a_ata: slice[2].clone(),
+                token_a_program: slice[3].clone(),
+                system_program: slice[4].clone(),
+                ata_program: slice[5].clone(),
+                token_b_mint: slice[6].clone(),
+                token_b_program: slice[7].clone(),
+                token_b_ata: slice[8].clone(),
+            },
+        })
     }
 }
-pub trait BluehouseApi {
-    fn process_lifinity_swap(
-        &self,
-        market: &LifinitySwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_meteora_damm_v2_swap(
-        &self,
-        market: &DammV2SwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_meteora_dlmm_swap(
-        &self,
-        market: &DlmmSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_obric_v2_swap(
-        &self,
-        market: &ObricV2SwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_pancake_v3_swap(
-        &self,
-        market: &PancakeSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_phoniex_swap(
-        &self,
-        market: &PhoniexSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_pump_buy(
-        &self,
-        market: &PumpSwapAccounts,
-        amount: u64,
-        amount_out: u64,
-    ) -> ProgramResult;
-    fn process_pump_sell(&self, market: &PumpSwapAccounts, amount: u64) -> ProgramResult;
-    fn process_ray_amm_swap(
-        &self,
-        market: &RaySwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_ray_cpmm_swap(
-        &self,
-        market: &RayCpmmSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_ray_clmm_swap(
-        &self,
-        market: &RayClmmSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_saros_dlmm_swap(
-        &self,
-        market: &SarosDlmmSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_saros_swap(
-        &self,
-        market: &SarosSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_solfi_swap(
-        &self,
-        market: &SolfiSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_stabble_swap(
-        &self,
-        market: &StabbleSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
-    fn process_vertigo_sell(&self, market: &VertigoSwapAccounts, amount: u64) -> ProgramResult;
-    fn process_vertigo_buy(&self, market: &VertigoSwapAccounts, amount: u64) -> ProgramResult;
-    fn process_orca_swap_v2(
-        &self,
-        market: &WhirlpoolSwapV2Accounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult;
+//tthe program currenlty supports one ix ->swap
+pub fn swap(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
+    /*
+        wallet           0
+        token_a_mint     1
+        token_a_ata      2
+        token_program    3
+        sys_program      4
+        ata_program      5
+        token_b_mint     6
+        token_b_program  7
+        token_b_ata      8
+        dex_id_          9
+        ... swap accounts ...
+    */
+    let bh = Bluehouse::from_slice(&accounts[0..9])?;
+
+    let amount_in: [u8; 8] = data[1..9].try_into().unwrap();
+    let amount_out: [u8; 8] = data[9..17].try_into().unwrap();
+    let a_to_b: bool = data[17] != 0;
+
+    let program_id = *accounts[9].key();
+    if !KNOWN_PROGRAMS.contains(&program_id) {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    match program_id {
+        x if x == DLMM_PROGRAM_ID => {
+            process_meteora_dlmm_swap(&bh, accounts, 9, amount_in, a_to_b)?
+        }
+        x if x == DAMM_PROGRAM_ID => {
+            process_meteora_damm_v2_swap(&bh, accounts, 9, amount_in, a_to_b)?
+        }
+        x if x == WHIRLPOOLS_PROGRAM_ID => {
+            process_orca_swap_v2(&bh, accounts, 9, amount_in, a_to_b, None)?
+        }
+        x if x == RAY_AMM_PROGRAM_ID => process_ray_amm_swap(&bh, accounts, 9, amount_in, a_to_b)?,
+        x if x == RAY_CPMM_PROGRAM_ID => {
+            process_ray_cpmm_swap(&bh, accounts, 9, amount_in, a_to_b)?
+        }
+        x if x == RAY_CL_PROGRAM_ID => {
+            process_ray_cl_swap(&bh, accounts, 9, amount_in, a_to_b, None)?
+        }
+        x if x == PUMP_AMM_PROGRAM_ID && u64::from_le_bytes(amount_out) != 0 => {
+            process_pump_buy(&bh, accounts, 9, amount_in, amount_out)?;
+        }
+        x if x == PUMP_AMM_PROGRAM_ID => {
+            process_pump_sell(&bh, accounts, 9, amount_in)?;
+        }
+        x if x == LIFINITY_PROGRAM_ID => {
+            process_lifinity_swap(&bh, accounts, 9, amount_in, a_to_b)?;
+        }
+        x if x == OBRIC_V2_PROGRAM_ID => {
+            process_obric_v2_swap(&bh, accounts, 9, amount_in, a_to_b)?;
+        }
+        x if x == PANCAKE_SWAP_V3_PROGRAM_ID => {
+            process_pancake_v3_swap(&bh, accounts, 9, amount_in, a_to_b, None)?;
+        }
+        x if x == PHONIEX_PROGRAM_ID => {
+            process_phoniex_swap(&bh, accounts, 9, amount_in, a_to_b)?;
+        }
+        x if x == SAROS_PROGRAM_ID => {
+            process_saros_swap(&bh, accounts, 9, amount_in, a_to_b)?;
+        }
+        x if x == SAROS_DLMM_PROGRAM_ID => {
+            process_saros_dlmm_swap(&bh, accounts, 9, amount_in, a_to_b, None)?;
+        }
+        x if x == SOLFI_PROGRAM_ID => {
+            process_solfi_swap(&bh, accounts, 9, amount_in, a_to_b)?;
+        }
+        x if x == STABBLE_PROGRAM_ID => {
+            process_stabble_swap(&bh, accounts, 9, amount_in, a_to_b)?;
+        }
+        x if x == VERTIGO_PROGRAM_ID && u64::from_le_bytes(amount_out) != 0 => {
+            process_vertigo_buy(&bh, accounts, 9, amount_in, amount_out)?;
+        }
+        x if x == VERTIGO_PROGRAM_ID => {
+            process_vertigo_sell(&bh, accounts, 9, amount_in)?;
+        }
+
+        _ => return Err(ProgramError::InvalidInstructionData),
+    }
+
+    Ok(())
 }
-impl BluehouseApi for Bluehouse {
-    fn process_lifinity_swap(
-        &self,
-        market: &LifinitySwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::lifinity::process_lifinity_swap(self, market, amount, a_to_b)
-    }
 
-    fn process_meteora_damm_v2_swap(
-        &self,
-        market: &DammV2SwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::meteora_damm_v2::process_meteora_damm_v2_swap(self, market, amount, a_to_b)
-    }
-
-    fn process_meteora_dlmm_swap(
-        &self,
-        market: &DlmmSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::meteora_dlmm::process_meteora_dlmm_swap(self, market, amount, a_to_b)
-    }
-
-    fn process_obric_v2_swap(
-        &self,
-        market: &ObricV2SwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::obric_v2::process_obric_v2_swap(self, market, amount, a_to_b)
-    }
-
-    fn process_pancake_v3_swap(
-        &self,
-        market: &PancakeSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::pancake_v3::process_pancake_v3_swap(self, market, amount, a_to_b, None)
-    }
-
-    fn process_phoniex_swap(
-        &self,
-        market: &PhoniexSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::phoniex::process_phoniex_swap(self, market, amount, a_to_b)
-    }
-
-    fn process_pump_buy(
-        &self,
-        market: &PumpSwapAccounts,
-        amount: u64,
-        amount_out: u64,
-    ) -> ProgramResult {
-        swap_handler::pump::process_pump_buy(self, market, amount, amount_out)
-    }
-
-    fn process_pump_sell(&self, market: &PumpSwapAccounts, amount: u64) -> ProgramResult {
-        swap_handler::pump::process_pump_sell(self, market, amount)
-    }
-
-    fn process_ray_amm_swap(
-        &self,
-        market: &RaySwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::ray_amm::process_ray_amm_swap(self, market, amount, a_to_b)
-    }
-
-    fn process_ray_cpmm_swap(
-        &self,
-        market: &RayCpmmSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::ray_cpmm::process_ray_cpmm_swap(self, market, amount, a_to_b)
-    }
-
-    fn process_ray_clmm_swap(
-        &self,
-        market: &RayClmmSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::ray_clmm::process_ray_cl_swap(self, market, amount, a_to_b, None)
-    }
-    fn process_saros_dlmm_swap(
-        &self,
-        market: &SarosDlmmSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::saros::process_saros_dlmm_swap(self, market, amount, a_to_b, None)
-    }
-
-    fn process_saros_swap(
-        &self,
-        market: &SarosSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::saros::process_saros_swap(self, market, amount, a_to_b)
-    }
-
-    fn process_solfi_swap(
-        &self,
-        market: &SolfiSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::solfi::process_solfi_swap(self, market, amount, a_to_b)
-    }
-
-    fn process_stabble_swap(
-        &self,
-        market: &StabbleSwapAccounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::stabble::process_stabble_swap(self, market, amount, a_to_b)
-    }
-
-    fn process_vertigo_sell(&self, market: &VertigoSwapAccounts, amount: u64) -> ProgramResult {
-        swap_handler::vertigo::process_vertigo_sell(self, market, amount)
-    }
-
-    fn process_vertigo_buy(&self, market: &VertigoSwapAccounts, amount: u64) -> ProgramResult {
-        swap_handler::vertigo::process_vertigo_buy(self, market, amount)
-    }
-
-    fn process_orca_swap_v2(
-        &self,
-        market: &WhirlpoolSwapV2Accounts,
-        amount: u64,
-        a_to_b: bool,
-    ) -> ProgramResult {
-        swap_handler::whirlpool::process_orca_swap_v2(self, market, amount, a_to_b, None)
-    }
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
+pub struct SwapData {
+    pub amount_in: [u8; 8],
+    pub amount_out: [u8; 8], //only for pump buy/vertigo buy ,else set to 0 (for pump & vertigo it shoud be >0)
+    pub a_to_b: u8,
 }

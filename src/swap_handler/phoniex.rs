@@ -6,47 +6,38 @@ use pinocchio::{ProgramResult, account_info::AccountInfo};
 const PHONIEX_SWAP_FLAGS: &[u8] = &[0, 0, 1, 2, 1, 1, 1, 1, 0]; //9
 //https://github.com/Ellipsis-Labs/phoenix-v1/blob/master/idl/phoenix_v1.json
 /*
-accounts provided
-id,offset+0
-first_mint,offset+1
-auth,offset+2
-pool,offset+3
-amm_config,offset+4
-vault x,offset+5
-vault y,offset+6
-observation,offset+7
+pub program_id: AccountInfo,
+  pub log_auth: AccountInfo,
+  pub pool: AccountInfo,
+  pub vault_a: AccountInfo,
+  pub vault_b: AccountInfo,
 */
-#[derive(Clone)]
-pub struct PhoniexSwapAccounts {
-    pub program_id: AccountInfo,
-    pub first_mint: AccountInfo,
-    pub log_auth: AccountInfo,
-    pub pool: AccountInfo,
-    pub vault_a: AccountInfo,
-    pub vault_b: AccountInfo,
-}
 pub fn process_phoniex_swap(
     bh: &Bluehouse,
-    market: &PhoniexSwapAccounts,
-    amount: u64,
-    a_to_b: bool, //base_to_quote
+    accounts: &[AccountInfo],
+    offset: usize,
+    amount: [u8; 8],
+    a_to_b: bool, // base_to_quote
 ) -> ProgramResult {
+    let amount = u64::from_le_bytes(amount);
     let (token_in_ata, token_out_ata) = bh.token_atas(a_to_b);
 
     let cpi_accounts = [
-        &market.program_id,       // program
-        &market.log_auth,         //log auth
-        &market.pool,             //market
-        &bh.base.payer,           //trader
+        &accounts[offset + 0],    // program_id
+        &accounts[offset + 1],    // log_auth
+        &accounts[offset + 2],    // pool
+        &bh.base.payer,           // trader
         token_in_ata,             // base account
         token_out_ata,            // quote account
-        &market.vault_a,          //base vault
-        &market.vault_b,          // quote vault
-        &bh.base.token_a_program, //token program
+        &accounts[offset + 3],    // vault_a
+        &accounts[offset + 4],    // vault_b
+        &bh.base.token_a_program, // token program
     ];
+
     let order_type = 2u8; // 'immediateOrCancel'
     let bh_trade_behavior = 1u8; // 'cancelProvide'
-    let (base_lot_size, quote_lot_size) = get_lot_size(&market.pool)?;
+
+    let (base_lot_size, quote_lot_size) = get_lot_size(&accounts[offset + 2])?;
     let (side, num_base_lots, num_quote_lots) = if a_to_b {
         (
             1u8,
@@ -64,8 +55,9 @@ pub fn process_phoniex_swap(
                 .ok_or(ProgramError::InvalidInstructionData)?,
         ) // 'bid' side
     };
+
     let mut instr_data = [0u8; 55];
-    instr_data[0] = 0u8; // disc
+    instr_data[0] = 0u8; // discriminator
     instr_data[1] = order_type;
     instr_data[2] = side;
     instr_data[3] = 0; // absence of price_in_ticks

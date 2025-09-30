@@ -3,48 +3,40 @@ use crate::common::*;
 use pinocchio::{ProgramResult, account_info::AccountInfo};
 const VERTIGO_SWAP_FLAGS: &[u8] = &[1, 2, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0]; //13
 /*
-accounts passed to vertigo
-program_id,offset+0
-first_mint,offser+1
-pool,offset+2
-pool_owner,offset+3
-vault a,offset+4
-vault b,offset+5
- */
-#[derive(Clone)]
-pub struct VertigoSwapAccounts {
-    pub program_id: AccountInfo,
-    pub first_mint: AccountInfo,
-    pub pool: AccountInfo,
-    pub pool_owner: AccountInfo,
-    pub vault_a: AccountInfo,
-    pub vault_b: AccountInfo,
-}
+  pub program_id: AccountInfo,
+   pub pool: AccountInfo,
+   pub pool_owner: AccountInfo,
+   pub vault_a: AccountInfo,
+   pub vault_b: AccountInfo,
+*/
 pub fn process_vertigo_buy(
     bh: &Bluehouse,
-    market: &VertigoSwapAccounts,
-    amount: u64,
+    accounts: &[AccountInfo],
+    offset: usize,
+    amount: [u8; 8],
+    min_amount_out: [u8; 8],
 ) -> ProgramResult {
-    let cpi_accounts = [
-        &market.pool,             // pool
+    let cpi_accounts: [&AccountInfo; 13] = [
+        &accounts[offset + 1],    // pool
         &bh.base.payer,           // user
-        &market.pool_owner,       // owner
+        &accounts[offset + 2],    // pool_owner
         &bh.base.token_a_mint,    // mint a
         &bh.base.token_b_mint,    // mint b
         &bh.base.token_a_ata,     // user ata a
         &bh.base.token_b_ata,     // user ata b
-        &market.vault_a,          // vault a
-        &market.vault_b,          // vault b
+        &accounts[offset + 3],    // vault a
+        &accounts[offset + 4],    // vault b
         &bh.base.token_a_program, // token program a
         &bh.base.token_b_program, // token program b
         &bh.base.system_program,  // sys program
-        &market.program_id,       // program id
+        &accounts[offset + 0],    // program id
     ];
+
     let mut instr_data = [0u8; 24];
-    //8+8+8
-    instr_data[0..8].copy_from_slice(VERTIGO_BUY_SELECTOR); // discriminator
-    instr_data[8..16].copy_from_slice(&amount.to_le_bytes()); // amount
-    instr_data[16..24].copy_from_slice(&0u64.to_le_bytes());
+    instr_data[0..8].copy_from_slice(VERTIGO_BUY_SELECTOR);
+    instr_data[8..16].copy_from_slice(&amount);
+    instr_data[16..24].copy_from_slice(&min_amount_out);
+
     execute_cpi::<13>(
         &VERTIGO_PROGRAM_ID,
         &cpi_accounts,
@@ -56,28 +48,29 @@ pub fn process_vertigo_buy(
 }
 pub fn process_vertigo_sell(
     bh: &Bluehouse,
-    market: &VertigoSwapAccounts,
-    amount: u64,
+    accounts: &[AccountInfo],
+    offset: usize,
+    amount: [u8; 8],
 ) -> ProgramResult {
-    let cpi_accounts = [
-        &market.pool,             // pool
+    let cpi_accounts: [&AccountInfo; 13] = [
+        &accounts[offset + 1],    // pool
         &bh.base.payer,           // user
-        &market.pool_owner,       // owner
+        &accounts[offset + 2],    // pool_owner
         &bh.base.token_a_mint,    // mint a
         &bh.base.token_b_mint,    // mint b
         &bh.base.token_a_ata,     // user ata a
         &bh.base.token_b_ata,     // user ata b
-        &market.vault_a,          // vault a
-        &market.vault_b,          // vault b
+        &accounts[offset + 3],    // vault a
+        &accounts[offset + 4],    // vault b
         &bh.base.token_a_program, // token program a
         &bh.base.token_b_program, // token program b
         &bh.base.system_program,  // sys program
-        &market.program_id,       // program id
+        &accounts[offset + 0],    // program id
     ];
+
     let mut instr_data = [0u8; 24];
-    //8+8+8
-    instr_data[0..8].copy_from_slice(VERTIGO_SELL_SELECTOR); // discriminator
-    instr_data[8..16].copy_from_slice(&amount.to_le_bytes()); // amount
+    instr_data[0..8].copy_from_slice(VERTIGO_SELL_SELECTOR);
+    instr_data[8..16].copy_from_slice(&amount);
     instr_data[16..24].copy_from_slice(&0u64.to_le_bytes());
 
     execute_cpi::<13>(
