@@ -1,1 +1,6 @@
+# Rust build artifacts
 /target
+
+# Other common ignores
+**/*.rs.bk
+Cargo.lock
