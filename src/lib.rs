@@ -23,7 +23,6 @@ use crate::{
     },
 };
 
-use bytemuck::{Pod, Zeroable};
 use pinocchio::{
     ProgramResult, account_info::AccountInfo, default_panic_handler, no_allocator,
     program_entrypoint, program_error::ProgramError, pubkey::Pubkey,
@@ -31,7 +30,7 @@ use pinocchio::{
 program_entrypoint!(process_instruction);
 no_allocator!();
 default_panic_handler!();
-pinocchio_pubkey::declare_id!("ENrRns55VechXJiq4bMbdx7idzabctvaEJoYeWxRNe7Y");
+pinocchio_pubkey::declare_id!("b1225DYKeTyLGd4SrNZFPcgzCC76Q9qniud7XgwB7C4");
 #[inline(always)]
 pub fn process_instruction(
     program_id: &Pubkey,
@@ -41,19 +40,7 @@ pub fn process_instruction(
     swap(accounts, &instruction_data)?;
     Ok(())
 }
-#[repr(u8)]
-pub enum ProgramInstruction {
-    Swap,
-}
-impl TryFrom<&u8> for ProgramInstruction {
-    type Error = ProgramError;
-    fn try_from(value: &u8) -> Result<Self, Self::Error> {
-        match *value {
-            0 => Ok(ProgramInstruction::Swap),
-            _ => Err(ProgramError::InvalidInstructionData),
-        }
-    }
-}
+
 #[derive(Clone)]
 pub struct BaseAccounts {
     pub payer: AccountInfo,
@@ -176,7 +163,7 @@ pub fn swap(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Pod, Zeroable)]
+#[derive(Clone, Copy)]
 pub struct SwapData {
     pub amount_in: [u8; 8],
     pub amount_out: [u8; 8], //only for pump buy/vertigo buy ,else set to 0 (for pump & vertigo it shoud be >0)
