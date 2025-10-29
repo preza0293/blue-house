@@ -16,7 +16,7 @@ use solana_sdk::{
 };
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token::state::Account as TokenAccount;
-const WALLET_PATH: &str = "/home/mubariz/wallnuts/mainnet-keypair.json";
+const WALLET_PATH: &str = "WALLET_PATH";
 
 // ─────────────────────────────────────────────────────────────
 // Program IDs
