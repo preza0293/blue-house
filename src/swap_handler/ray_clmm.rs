@@ -35,17 +35,17 @@ pub fn process_ray_cl_swap(
 
     let mut cpi_accounts: ArrayVec<&AccountInfo, 13> = ArrayVec::new();
     cpi_accounts.extend([
-        &bh.base.payer,           // payer
-        &accounts[offset + 2],    // amm_config
-        &accounts[offset + 1],    // pool
-        token_in_ata,             // input ATA
-        token_out_ata,            // output ATA
-        input_vault,              // input vault
-        output_vault,             // output vault
-        &accounts[offset + 3],    // observation_state
-        &bh.base.token_a_program, // token program
-        &accounts[offset + 7],    // tick_array_0
-        &accounts[offset + 4],    // bitmap_extension
+        bh.base.payer,           // payer
+        &accounts[offset + 2],   // amm_config
+        &accounts[offset + 1],   // pool
+        token_in_ata,            // input ATA
+        token_out_ata,           // output ATA
+        input_vault,             // input vault
+        output_vault,            // output vault
+        &accounts[offset + 3],   // observation_state
+        bh.base.token_a_program, // token program
+        &accounts[offset + 7],   // tick_array_0
+        &accounts[offset + 4],   // bitmap_extension
     ]);
 
     // Optionally push tick_array_1 and tick_array_2 if lamports > 0
@@ -66,7 +66,7 @@ pub fn process_ray_cl_swap(
     execute_cpi::<13>(
         &RAY_CL_PROGRAM_ID,
         &cpi_accounts,
-        &RAY_CL_SWAP_FLAGS,
+        RAY_CL_SWAP_FLAGS,
         &instr_data,
     )?;
 

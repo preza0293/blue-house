@@ -10,6 +10,7 @@ use pinocchio::{
     instruction::{AccountMeta, Instruction},
     program_error::ProgramError,
 };
+
 pub const PUMPFUN_BUY_SELECTOR: &[u8; 8] = &[102, 6, 61, 18, 1, 218, 235, 234];
 pub const PUMPFUN_SELL_SELECTOR: &[u8; 8] = &[51, 230, 133, 164, 1, 127, 131, 173];
 pub const SWAP2_SELECTOR: &[u8; 8] = &[65, 75, 63, 76, 235, 91, 91, 136];
@@ -168,12 +169,12 @@ pub fn execute_cpi<'a, const N: usize>(
     }
     Ok(())
 }
-impl<'a> Bluehouse<'a> {
+impl Bluehouse<'_> {
     pub fn token_atas(&self, a_to_b: bool) -> (&AccountInfo, &AccountInfo) {
         if a_to_b {
-            (&self.base.token_a_ata, &self.base.token_b_ata)
+            (self.base.token_a_ata, self.base.token_b_ata)
         } else {
-            (&self.base.token_b_ata, &self.base.token_a_ata)
+            (self.base.token_b_ata, self.base.token_a_ata)
         }
     }
 }

@@ -24,14 +24,14 @@ pub fn process_saros_swap(
     let cpi_accounts: [&AccountInfo; 10] = [
         &accounts[offset + 1],                          // pool
         &accounts[offset + 4],                          // pool_auth
-        &bh.base.payer,                                 // user transfer auth
+        bh.base.payer,                                  // user transfer auth
         token_in_ata,                                   // source
         &accounts[offset + if a_to_b { 5 } else { 6 }], // swap source
         &accounts[offset + if a_to_b { 6 } else { 5 }], // swap dest
         token_out_ata,                                  // destination
         &accounts[offset + 2],                          // pool_mint
         &accounts[offset + 3],                          // pool_fee
-        &bh.base.token_a_program,                       // token program
+        bh.base.token_a_program,                        // token program
     ];
 
     let mut instr_data = [0u8; 17];
@@ -42,7 +42,7 @@ pub fn process_saros_swap(
     execute_cpi::<10>(
         &SAROS_PROGRAM_ID,
         &cpi_accounts,
-        &SAROS_SWAP_FLAGS,
+        SAROS_SWAP_FLAGS,
         &instr_data,
     )?;
 
@@ -71,28 +71,28 @@ pub fn process_saros_dlmm_swap(
     let direction = if a_to_b { 0u8 } else { 1u8 };
 
     let cpi_accounts: [&AccountInfo; 15] = [
-        &accounts[offset + 2],    // pool
-        &bh.base.token_a_mint,    // token mint x
-        &bh.base.token_b_mint,    // token mint y
-        &accounts[offset + 4],    // bin array lower
-        &accounts[offset + 5],    // bin array upper
-        &accounts[offset + 6],    // vault_a
-        &accounts[offset + 7],    // vault_b
-        token_in_ata,             // user vault x (source)
-        token_out_ata,            // user vault y (dest)
-        &bh.base.payer,           // user
-        &bh.base.token_a_program, // token program x
-        &bh.base.token_b_program, // token program y
-        &accounts[offset + 1],    // memo_program_v2
-        &accounts[offset + 3],    // event_auth
-        &accounts[offset + 0],    // program_id
+        &accounts[offset + 2],   // pool
+        bh.base.token_a_mint,    // token mint x
+        bh.base.token_b_mint,    // token mint y
+        &accounts[offset + 4],   // bin array lower
+        &accounts[offset + 5],   // bin array upper
+        &accounts[offset + 6],   // vault_a
+        &accounts[offset + 7],   // vault_b
+        token_in_ata,            // user vault x (source)
+        token_out_ata,           // user vault y (dest)
+        bh.base.payer,           // user
+        bh.base.token_a_program, // token program x
+        bh.base.token_b_program, // token program y
+        &accounts[offset + 1],   // memo_program_v2
+        &accounts[offset + 3],   // event_auth
+        &accounts[offset],       // program_id
     ];
 
     let mut instr_data = [0u8; 26];
     instr_data[0..8].copy_from_slice(SWAP_SELECTOR); // discriminator
     instr_data[9..16].copy_from_slice(&amount); // amount
     instr_data[16..24].copy_from_slice(&1u64.to_le_bytes()); // min out
-    instr_data[24] = direction as u8; // direction
+    instr_data[24] = direction; // direction
     instr_data[25] = if is_base_input.unwrap_or(true) {
         0u8
     } else {
@@ -102,7 +102,7 @@ pub fn process_saros_dlmm_swap(
     execute_cpi::<15>(
         &SAROS_PROGRAM_ID,
         &cpi_accounts,
-        &SAROS_DLMM_SWAP_FLAGS,
+        SAROS_DLMM_SWAP_FLAGS,
         &instr_data,
     )?;
 

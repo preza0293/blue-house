@@ -27,20 +27,20 @@ pub fn process_meteora_dlmm_swap(
     let mut cpi_accounts: ArrayVec<&AccountInfo, 18> = ArrayVec::new();
     cpi_accounts.extend([
         &accounts[offset + 2], // lb_pair
-        &accounts[offset + 0], // program_id
+        &accounts[offset],     // program_id
         &accounts[offset + 3], // vault_a
         &accounts[offset + 4], // vault_b
         token_in_ata,          // user token in ATA
         token_out_ata,         // user token out ATA
-        &bh.base.token_a_mint, // mint A
-        &bh.base.token_b_mint, // mint B
+        bh.base.token_a_mint,  // mint A
+        bh.base.token_b_mint,  // mint B
         &accounts[offset + 5], // oracle
-        &accounts[offset + 0], // program_id(host fee in)
-        &bh.base.payer,        // payer
-        &bh.base.token_a_program,
-        &bh.base.token_b_program,
+        &accounts[offset],     // program_id(host fee in)
+        bh.base.payer,         // payer
+        bh.base.token_a_program,
+        bh.base.token_b_program,
         &accounts[offset + 1], // event_auth
-        &accounts[offset + 0], // program_id
+        &accounts[offset],     // program_id
         &accounts[offset + 6], // bin_array_0
     ]);
 
@@ -60,7 +60,7 @@ pub fn process_meteora_dlmm_swap(
     execute_cpi::<18>(
         &DLMM_PROGRAM_ID,
         &cpi_accounts,
-        &DLMM_SWAP_FLAGS,
+        DLMM_SWAP_FLAGS,
         &instr_data,
     )?;
 

@@ -17,19 +17,19 @@ pub fn process_vertigo_buy(
     min_amount_out: [u8; 8],
 ) -> ProgramResult {
     let cpi_accounts: [&AccountInfo; 13] = [
-        &accounts[offset + 1],    // pool
-        &bh.base.payer,           // user
-        &accounts[offset + 2],    // pool_owner
-        &bh.base.token_a_mint,    // mint a
-        &bh.base.token_b_mint,    // mint b
-        &bh.base.token_a_ata,     // user ata a
-        &bh.base.token_b_ata,     // user ata b
-        &accounts[offset + 3],    // vault a
-        &accounts[offset + 4],    // vault b
-        &bh.base.token_a_program, // token program a
-        &bh.base.token_b_program, // token program b
-        &bh.base.system_program,  // sys program
-        &accounts[offset + 0],    // program id
+        &accounts[offset + 1],   // pool
+        bh.base.payer,           // user
+        &accounts[offset + 2],   // pool_owner
+        bh.base.token_a_mint,    // mint a
+        bh.base.token_b_mint,    // mint b
+        bh.base.token_a_ata,     // user ata a
+        bh.base.token_b_ata,     // user ata b
+        &accounts[offset + 3],   // vault a
+        &accounts[offset + 4],   // vault b
+        bh.base.token_a_program, // token program a
+        bh.base.token_b_program, // token program b
+        bh.base.system_program,  // sys program
+        &accounts[offset],       // program id
     ];
 
     let mut instr_data = [0u8; 24];
@@ -40,7 +40,7 @@ pub fn process_vertigo_buy(
     execute_cpi::<13>(
         &VERTIGO_PROGRAM_ID,
         &cpi_accounts,
-        &VERTIGO_SWAP_FLAGS,
+        VERTIGO_SWAP_FLAGS,
         &instr_data,
     )?;
 
@@ -53,19 +53,19 @@ pub fn process_vertigo_sell(
     amount: [u8; 8],
 ) -> ProgramResult {
     let cpi_accounts: [&AccountInfo; 13] = [
-        &accounts[offset + 1],    // pool
-        &bh.base.payer,           // user
-        &accounts[offset + 2],    // pool_owner
-        &bh.base.token_a_mint,    // mint a
-        &bh.base.token_b_mint,    // mint b
-        &bh.base.token_a_ata,     // user ata a
-        &bh.base.token_b_ata,     // user ata b
-        &accounts[offset + 3],    // vault a
-        &accounts[offset + 4],    // vault b
-        &bh.base.token_a_program, // token program a
-        &bh.base.token_b_program, // token program b
-        &bh.base.system_program,  // sys program
-        &accounts[offset + 0],    // program id
+        &accounts[offset + 1],   // pool
+        bh.base.payer,           // user
+        &accounts[offset + 2],   // pool_owner
+        bh.base.token_a_mint,    // mint a
+        bh.base.token_b_mint,    // mint b
+        bh.base.token_a_ata,     // user ata a
+        bh.base.token_b_ata,     // user ata b
+        &accounts[offset + 3],   // vault a
+        &accounts[offset + 4],   // vault b
+        bh.base.token_a_program, // token program a
+        bh.base.token_b_program, // token program b
+        bh.base.system_program,  // sys program
+        &accounts[offset],       // program id
     ];
 
     let mut instr_data = [0u8; 24];
@@ -76,7 +76,7 @@ pub fn process_vertigo_sell(
     execute_cpi::<13>(
         &VERTIGO_PROGRAM_ID,
         &cpi_accounts,
-        &VERTIGO_SWAP_FLAGS,
+        VERTIGO_SWAP_FLAGS,
         &instr_data,
     )?;
 

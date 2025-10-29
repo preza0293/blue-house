@@ -22,7 +22,7 @@ pub fn process_ray_cpmm_swap(
     let (token_in_ata, token_out_ata) = bh.token_atas(a_to_b);
 
     let cpi_accounts: [&AccountInfo; 13] = [
-        &bh.base.payer,                                 // payer
+        bh.base.payer,                                  // payer
         &accounts[offset + 1],                          // auth
         &accounts[offset + 3],                          // amm_config
         &accounts[offset + 2],                          // pool
@@ -31,24 +31,24 @@ pub fn process_ray_cpmm_swap(
         &accounts[offset + if a_to_b { 5 } else { 6 }], // input vault
         &accounts[offset + if a_to_b { 6 } else { 5 }], // output vault
         if a_to_b {
-            &bh.base.token_a_program
+            bh.base.token_a_program
         } else {
-            &bh.base.token_b_program
+            bh.base.token_b_program
         }, // input program
         if a_to_b {
-            &bh.base.token_b_program
+            bh.base.token_b_program
         } else {
-            &bh.base.token_a_program
+            bh.base.token_a_program
         }, // output program
         if a_to_b {
-            &bh.base.token_a_mint
+            bh.base.token_a_mint
         } else {
-            &bh.base.token_b_mint
+            bh.base.token_b_mint
         }, // input mint
         if a_to_b {
-            &bh.base.token_b_mint
+            bh.base.token_b_mint
         } else {
-            &bh.base.token_a_mint
+            bh.base.token_a_mint
         }, // output mint
         &accounts[offset + 4],                          // observation
     ];
@@ -61,7 +61,7 @@ pub fn process_ray_cpmm_swap(
     execute_cpi::<13>(
         &RAY_CPMM_PROGRAM_ID,
         &cpi_accounts,
-        &RAY_CPMM_SWAP_FLAGS,
+        RAY_CPMM_SWAP_FLAGS,
         &instr_data,
     )?;
 

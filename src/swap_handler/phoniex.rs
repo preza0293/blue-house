@@ -23,15 +23,15 @@ pub fn process_phoniex_swap(
     let (token_in_ata, token_out_ata) = bh.token_atas(a_to_b);
 
     let cpi_accounts = [
-        &accounts[offset + 0],    // program_id
-        &accounts[offset + 1],    // log_auth
-        &accounts[offset + 2],    // pool
-        &bh.base.payer,           // trader
-        token_in_ata,             // base account
-        token_out_ata,            // quote account
-        &accounts[offset + 3],    // vault_a
-        &accounts[offset + 4],    // vault_b
-        &bh.base.token_a_program, // token program
+        &accounts[offset],       // program_id
+        &accounts[offset + 1],   // log_auth
+        &accounts[offset + 2],   // pool
+        bh.base.payer,           // trader
+        token_in_ata,            // base account
+        token_out_ata,           // quote account
+        &accounts[offset + 3],   // vault_a
+        &accounts[offset + 4],   // vault_b
+        bh.base.token_a_program, // token program
     ];
 
     let order_type = 2u8; // 'immediateOrCancel'
@@ -77,7 +77,7 @@ pub fn process_phoniex_swap(
     execute_cpi::<9>(
         &PHONIEX_PROGRAM_ID,
         &cpi_accounts,
-        &PHONIEX_SWAP_FLAGS,
+        PHONIEX_SWAP_FLAGS,
         &instr_data,
     )?;
 

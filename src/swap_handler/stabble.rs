@@ -27,7 +27,7 @@ pub fn process_stabble_swap(
     };
 
     let cpi_accounts: [&AccountInfo; 12] = [
-        &bh.base.payer,                                 // payer
+        bh.base.payer,                                  // payer
         token_in_ata,                                   // token in
         token_out_ata,                                  // token out
         &accounts[offset + if a_to_b { 7 } else { 8 }], // vault token in
@@ -38,7 +38,7 @@ pub fn process_stabble_swap(
         &accounts[offset + 3],                          // vault
         &accounts[offset + 2],                          // vault_auth
         &accounts[offset + 4],                          // vault_program
-        &bh.base.token_a_program,                       // token program
+        bh.base.token_a_program,                        // token program
     ];
 
     let mut instr_data = [0u8; 17];
@@ -49,7 +49,7 @@ pub fn process_stabble_swap(
     execute_cpi::<12>(
         &STABBLE_PROGRAM_ID,
         &cpi_accounts,
-        &STABBLE_SWAP_FLAGS,
+        STABBLE_SWAP_FLAGS,
         &instr_data,
     )?;
 

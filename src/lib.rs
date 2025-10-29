@@ -25,8 +25,8 @@ use crate::{
 };
 
 use pinocchio::{
-    ProgramResult, account_info::AccountInfo, default_panic_handler, no_allocator,
-    program_entrypoint, program_error::ProgramError, pubkey::Pubkey,
+    ProgramResult, account_info::AccountInfo, default_panic_handler, program_entrypoint,
+    program_error::ProgramError, pubkey::Pubkey,
 };
 const SWAP_DATA_SIZE: usize = 17;
 program_entrypoint!(process_instruction);
@@ -39,7 +39,7 @@ pub fn process_instruction(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    swap(accounts, &instruction_data)?;
+    swap(accounts, instruction_data)?;
     Ok(())
 }
 #[repr(C)]
@@ -119,7 +119,7 @@ pub fn swap(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
         let swap_data: SwapData = *SwapData::from_bytes(data);
 
         if KNOWN_PROGRAMS.contains(&program_id) {
-            swap_index = swap_index + 1;
+            swap_index += 1;
             match program_id {
                 x if x == DLMM_PROGRAM_ID => process_meteora_dlmm_swap(
                     &bh,
@@ -267,7 +267,7 @@ pub fn swap(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
             }
         }
 
-        account = account + 1;
+        account += 1;
     }
 
     Ok(())
