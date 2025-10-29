@@ -19,23 +19,23 @@ pub fn process_ray_amm_swap(
     let (token_in_ata, token_out_ata) = bh.token_atas(a_to_b);
 
     let cpi_accounts: [&AccountInfo; 17] = [
-        &bh.base.token_a_program, // token program
-        &accounts[offset + 2],    // pool
-        &accounts[offset + 1],    // auth
-        &accounts[offset + 2],    // open orders
-        &accounts[offset + 3],    // vault_a / coin ATA
-        &accounts[offset + 4],    // vault_b / pc ATA
-        &accounts[offset + 2],    // serum id
-        &accounts[offset + 2],    // serum market
-        &accounts[offset + 2],    // serum bids
-        &accounts[offset + 2],    // serum asks
-        &accounts[offset + 2],    // event queue
-        &accounts[offset + 2],    // coin vault
-        &accounts[offset + 2],    // pc vault
-        &accounts[offset + 2],    // vault signer
-        token_in_ata,             // source ATA
-        token_out_ata,            // destination ATA
-        &bh.base.payer,           // owner
+        bh.base.token_a_program, // token program
+        &accounts[offset + 2],   // pool
+        &accounts[offset + 1],   // auth
+        &accounts[offset + 2],   // open orders
+        &accounts[offset + 3],   // vault_a / coin ATA
+        &accounts[offset + 4],   // vault_b / pc ATA
+        &accounts[offset + 2],   // serum id
+        &accounts[offset + 2],   // serum market
+        &accounts[offset + 2],   // serum bids
+        &accounts[offset + 2],   // serum asks
+        &accounts[offset + 2],   // event queue
+        &accounts[offset + 2],   // coin vault
+        &accounts[offset + 2],   // pc vault
+        &accounts[offset + 2],   // vault signer
+        token_in_ata,            // source ATA
+        token_out_ata,           // destination ATA
+        bh.base.payer,           // owner
     ];
 
     let mut instr_data = [0u8; 17];
@@ -46,7 +46,7 @@ pub fn process_ray_amm_swap(
     execute_cpi::<17>(
         &RAY_AMM_PROGRAM_ID,
         &cpi_accounts,
-        &RAY_SWAP_FLAGS,
+        RAY_SWAP_FLAGS,
         &instr_data,
     )?;
 

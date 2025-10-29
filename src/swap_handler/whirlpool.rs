@@ -52,7 +52,7 @@ pub fn process_orca_swap_v2(
         token_program_a,       // token program a
         token_program_b,       // token program b
         &accounts[offset + 1], // meme_program_v2 (memo)
-        &bh.base.payer,        // payer
+        bh.base.payer,         // payer
         &accounts[offset + 2], // pool
         mint_a,
         mint_b,
@@ -84,7 +84,7 @@ pub fn process_orca_swap_v2(
     execute_cpi::<15>(
         &WHIRLPOOLS_PROGRAM_ID,
         &cpi_accounts,
-        &WHIRLPOOL_SWAP_FLAGS,
+        WHIRLPOOL_SWAP_FLAGS,
         &instr_data,
     )?;
 

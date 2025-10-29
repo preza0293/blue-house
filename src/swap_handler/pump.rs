@@ -59,22 +59,22 @@ pub fn process_pump_buy(
 ) -> ProgramResult {
     let cpi_accounts = [
         &accounts[offset + 4], // pool
-        &bh.base.payer,        // user
+        bh.base.payer,         // user
         &accounts[offset + 1], // global_config
-        &bh.base.token_a_mint,
-        &bh.base.token_b_mint,
-        &bh.base.token_a_ata,
-        &bh.base.token_b_ata,
+        bh.base.token_a_mint,
+        bh.base.token_b_mint,
+        bh.base.token_a_ata,
+        bh.base.token_b_ata,
         &accounts[offset + 5], // vault_a
         &accounts[offset + 6], // vault_b
         &accounts[offset + 3], // pump_fee_wallet
         &accounts[offset + 3], // pump_fee_wallet ata
-        &bh.base.token_a_program,
-        &bh.base.token_b_program,
-        &bh.base.system_program,
-        &bh.base.ata_program,
+        bh.base.token_a_program,
+        bh.base.token_b_program,
+        bh.base.system_program,
+        bh.base.ata_program,
         &accounts[offset + 2],  // pump_auth
-        &accounts[offset + 0],  // program_id
+        &accounts[offset],      // program_id
         &accounts[offset + 7],  // coin_creator_vault_ata
         &accounts[offset + 8],  // coin_creator_vault_authority
         &accounts[offset + 9],  // global_volume_accumulator
@@ -91,7 +91,7 @@ pub fn process_pump_buy(
     execute_cpi::<23>(
         &PUMP_AMM_PROGRAM_ID,
         &cpi_accounts,
-        &PUMP_BUY_FLAGS,
+        PUMP_BUY_FLAGS,
         &instr_data,
     )?;
 
@@ -106,22 +106,22 @@ pub fn process_pump_sell(
 ) -> ProgramResult {
     let cpi_accounts = [
         &accounts[offset + 4], // pool
-        &bh.base.payer,        // user
+        bh.base.payer,         // user
         &accounts[offset + 1], // global_config
-        &bh.base.token_a_mint,
-        &bh.base.token_b_mint,
-        &bh.base.token_a_ata,
-        &bh.base.token_b_ata,
+        bh.base.token_a_mint,
+        bh.base.token_b_mint,
+        bh.base.token_a_ata,
+        bh.base.token_b_ata,
         &accounts[offset + 5], // vault_a
         &accounts[offset + 6], // vault_b
         &accounts[offset + 3], // pump_fee_wallet
         &accounts[offset + 3], // pump_fee_wallet ata
-        &bh.base.token_a_program,
-        &bh.base.token_b_program,
-        &bh.base.system_program,
-        &bh.base.ata_program,
+        bh.base.token_a_program,
+        bh.base.token_b_program,
+        bh.base.system_program,
+        bh.base.ata_program,
         &accounts[offset + 2],  // pump_auth
-        &accounts[offset + 0],  // program_id
+        &accounts[offset],      // program_id
         &accounts[offset + 7],  // coin_creator_vault_ata
         &accounts[offset + 8],  // coin_creator_vault_authority
         &accounts[offset + 11], // pump_fee_config
@@ -136,7 +136,7 @@ pub fn process_pump_sell(
     execute_cpi::<21>(
         &PUMP_AMM_PROGRAM_ID,
         &cpi_accounts,
-        &PUMP_SELL_FLAGS,
+        PUMP_SELL_FLAGS,
         &instr_data,
     )?;
 

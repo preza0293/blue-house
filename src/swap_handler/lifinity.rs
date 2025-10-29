@@ -36,25 +36,25 @@ pub fn process_lifinity_swap(
     };
 
     let cpi_accounts = [
-        &accounts[offset + 2],    // auth
-        &accounts[offset + 1],    // pool
-        &bh.base.payer,           // user transfer auth
-        token_in_ata,             // source
-        token_out_ata,            // destination
-        swap_source,              // swap source
-        swap_destination,         // swap destination
-        &accounts[offset + 3],    // pool mint
-        &accounts[offset + 4],    // fee account
-        &bh.base.token_a_program, // token program
-        &accounts[offset + 5],    // oracle main account
-        &accounts[offset + 6],    // oracle sub account
-        &accounts[offset + 7],    // oracle pc account
+        &accounts[offset + 2],   // auth
+        &accounts[offset + 1],   // pool
+        bh.base.payer,           // user transfer auth
+        token_in_ata,            // source
+        token_out_ata,           // destination
+        swap_source,             // swap source
+        swap_destination,        // swap destination
+        &accounts[offset + 3],   // pool mint
+        &accounts[offset + 4],   // fee account
+        bh.base.token_a_program, // token program
+        &accounts[offset + 5],   // oracle main account
+        &accounts[offset + 6],   // oracle sub account
+        &accounts[offset + 7],   // oracle pc account
     ];
 
     execute_cpi::<13>(
         &LIFINITY_PROGRAM_ID,
         &cpi_accounts,
-        &LIFINITY_SWAP_FLAGS,
+        LIFINITY_SWAP_FLAGS,
         &instr_data,
     )?;
 

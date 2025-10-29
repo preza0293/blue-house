@@ -33,17 +33,17 @@ pub fn process_pancake_v3_swap(
 
     let mut cpi_accounts: ArrayVec<&AccountInfo, 13> = ArrayVec::new();
     cpi_accounts.extend([
-        &accounts[offset + 0],    // program_id / payer
-        &accounts[offset + 2],    // amm_config
-        &accounts[offset + 1],    // pool
-        token_in_ata,             // input ata
-        token_out_ata,            // output ata
-        input_vault,              // input vault
-        output_vault,             // output vault
-        &accounts[offset + 3],    // observation
-        &bh.base.token_a_program, // token program
-        &accounts[offset + 7],    // tick_array_0
-        &accounts[offset + 4],    // bitmap_extension
+        &accounts[offset],       // program_id / payer
+        &accounts[offset + 2],   // amm_config
+        &accounts[offset + 1],   // pool
+        token_in_ata,            // input ata
+        token_out_ata,           // output ata
+        input_vault,             // input vault
+        output_vault,            // output vault
+        &accounts[offset + 3],   // observation
+        bh.base.token_a_program, // token program
+        &accounts[offset + 7],   // tick_array_0
+        &accounts[offset + 4],   // bitmap_extension
     ]);
 
     // Conditionally push optional tick arrays
@@ -66,7 +66,7 @@ pub fn process_pancake_v3_swap(
     execute_cpi::<13>(
         &PANCAKE_SWAP_V3_PROGRAM_ID,
         &cpi_accounts,
-        &PANCAKE_SWAP_FLAGS,
+        PANCAKE_SWAP_FLAGS,
         &instr_data,
     )?;
 
