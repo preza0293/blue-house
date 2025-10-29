@@ -9,10 +9,21 @@ enable-log = []
 [lib]
 crate-type = ["lib", "cdylib"]
 [dependencies]
-pinocchio-log = { git = "https://github.com/anza-xyz/pinocchio.git" }
 pinocchio-pubkey = { git = "https://github.com/anza-xyz/pinocchio.git" }
 pinocchio-system = { git = "https://github.com/anza-xyz/pinocchio.git" }
 arrayvec = "0.7.6"
 arrayref = "0.3.9"
 pinocchio-token = "0.4.0"
-pinocchio = "0.9.2"
+pinocchio = { version = "0.9.2", features = ["std"] }
+solana-msg = "3.0.0"
+[dev-dependencies]
+solana-sdk = "2.1.0"
+solana-client = "2.1.0"
+solana-rpc-client = "2.1.0"
+solana-clock = "2.1.0"
+spl-token = { version = "4.0.0", features = ["no-entrypoint"] }
+anyhow = "1.0.99"
+litesvm = "0.7.0"
+serde = "1.0.219"
+reqwest = { version = "0.12", features = ["json", "blocking", "rustls-tls"] }
+spl-associated-token-account = "7.0.0"

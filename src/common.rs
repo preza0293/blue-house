@@ -60,10 +60,7 @@ pub const SOLFI_PROGRAM_ID: [u8; 32] = [
     6, 155, 232, 110, 201, 175, 101, 235, 74, 97, 79, 217, 155, 142, 146, 84, 125, 160, 20, 95,
     171, 94, 128, 74, 219, 89, 77, 179, 231, 58, 39, 27,
 ];
-pub const SOLFI_V2_PROGRAM_ID: [u8; 32] = [
-    6, 135, 52, 55, 180, 251, 201, 244, 4, 55, 221, 60, 230, 63, 156, 254, 140, 36, 132, 3, 85,
-    147, 161, 39, 129, 186, 42, 151, 190, 52, 22, 150,
-];
+
 pub const WHIRLPOOLS_PROGRAM_ID: [u8; 32] = [
     14, 3, 104, 95, 142, 144, 144, 83, 228, 88, 18, 28, 102, 245, 167, 106, 237, 199, 112, 106,
     161, 28, 130, 248, 170, 149, 42, 143, 43, 120, 121, 169,
@@ -112,6 +109,16 @@ pub const VERTIGO_BUY_SELECTOR: &[u8; 8] = &[102, 6, 61, 18, 1, 218, 235, 234];
 pub const VERTIGO_SELL_SELECTOR: &[u8; 8] = &[51, 230, 133, 164, 1, 127, 131, 173];
 
 pub const KNOWN_PROGRAMS: &[Pubkey] = &[
+    OBRIC_V2_PROGRAM_ID,
+    LIFINITY_PROGRAM_ID,
+    VERTIGO_PROGRAM_ID,
+    SOLFI_PROGRAM_ID,
+    STABBLE_PROGRAM_ID,
+    SAROS_DLMM_PROGRAM_ID,
+    SAROS_PROGRAM_ID,
+    HUMIDIFI_PROGRAM_ID,
+    PHONIEX_PROGRAM_ID,
+    PANCAKE_SWAP_V3_PROGRAM_ID,
     WHIRLPOOLS_PROGRAM_ID,
     DLMM_PROGRAM_ID,
     DAMM_PROGRAM_ID,
@@ -161,7 +168,7 @@ pub fn execute_cpi<'a, const N: usize>(
     }
     Ok(())
 }
-impl Bluehouse {
+impl<'a> Bluehouse<'a> {
     pub fn token_atas(&self, a_to_b: bool) -> (&AccountInfo, &AccountInfo) {
         if a_to_b {
             (&self.base.token_a_ata, &self.base.token_b_ata)
